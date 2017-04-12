@@ -1,114 +1,153 @@
-function refreshExpenseValue(){
-  document.getElementById('lastExpenses').value = 0;
+var listOfExpenses = [];
+var listOfSettings = [];
+
+function refreshExpenseValue() {
+    document.getElementById('lastExpenses').value = 0;
+}
+
+function removeSign() {
+    var val = getExpenseValue();
+    val = val.slice(0, -1);
+    insertValueToExpense(val);
+}
+
+function setDay()
+{
+    if (document.getElementById('h2DayVal').innerHTML == '') {
+        var now = new Date();
+        var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var day = days[now.getDay()];
+        document.getElementById('h2DayVal').innerHTML += " " + day;
+    }
 }
 
 function getExpenseValue(){
-  var expense = document.getElementById('lastExpenses').value;
-  var nothing = "";
+    var expense = document.getElementById('lastExpenses').value;
   if ((expense == 0) || (expense == null) || (expense == "0")){
-    return nothing;
+    return "";
   }
   else{
     return expense;
   }
 }
 
+// funkcja ustawiajaca walute na ekranie dodawania wydaktow w zaleznosci od ustawien w opcjach
+function setDefaultCurrency(){
+	$('#setCurrency').on('change', function(){
+		$('#currency').val($(this).val());
+	});
+}
+// wywolanie ww funkcji po uruchomieniu aplikacji
+$(document).ready(function(){
+	setDefaultCurrency();
+});
+
+function getCurrency() {
+
+}
+
+function converterToDefaultCurrency() {
+
+}
+
+function addToArray()
+{
+    var val = getExpenseValue();
+    var amount = val.substring(val.indexOf("X") + 1);
+    var id = localStorage.getItem('DbID');
+    var type = getType();
+    var date = new Date();
+    var strDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    if (id == null)
+    {
+        id = 1;
+        localStorage.setItem('DbID', id);
+    }
+    if (val != "" && type !== 'Choose') {
+        var obj = { id: id, type: type, value: val, date: strDate };
+        listOfExpenses.push(obj);    
+        localStorage.setItem('DbID', ++id);
+        refreshExpenseValue();
+    }
+    else
+    {
+        //TODO: walidacja/ pojawienie się błędu z nie wybranym typem
+    }
+
+}
+
+function getType() {
+    var e = document.getElementById("typeSelect");
+    var type = e.options[e.selectedIndex].value;
+    return type;
+}
+
 function insertValueToExpense(new_value){
-  document.getElementById('lastExpenses').value = new_value;
+    document.getElementById('lastExpenses').value  = new_value;
 }
 
-function button9(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "9";
-  insertValueToExpense(new_value);
+function setNumber(e){
+    var expense = getExpenseValue();
+    if (decimalValue(expense))
+    {   
+        if (e.innerHTML != 'X' || e.innerHTML != ',') {
+            var new_value = expense.toString() + e.innerHTML;
+            insertValueToExpense(new_value);
+        }
+    }  
 }
 
-function button8(){
+function buttonSpecialSign(et){
   var expense = getExpenseValue();
   var e = expense.toString();
-  var new_value = e + "8";
-  insertValueToExpense(new_value);
-}
-
-function button7(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "7";
-  insertValueToExpense(new_value);
-}
-
-function button6(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "6";
-  insertValueToExpense(new_value);
-}
-
-function button5(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "5";
-  insertValueToExpense(new_value);
-}
-
-function button4(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "4";
-  insertValueToExpense(new_value);
-}
-
-function button3(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "3";
-  insertValueToExpense(new_value);
-}
-
-function button2(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "2";
-  insertValueToExpense(new_value);
-}
-
-function button1(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "1";
-  insertValueToExpense(new_value);
-}
-
-function button0(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  var new_value = e + "0";
-  insertValueToExpense(new_value);
-}
-
-function buttonComma(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  // TO DO: walidacja na to, że jak występuje już przecinek, to żeby nic nie robił
-  if ((e == '') || (e == '0')){
-    var new_value = "0,"
+  if (checkstring(expense, et.innerHTML)) {
+      if ((e == '') || (e == '0')) {
+          var new_value = "0" + et.innerHTML;
+      }
+      else {
+          var new_value = e + et.innerHTML;
+      }
+      insertValueToExpense(new_value);
   }
-  else{
-    var new_value = e + ",";
-  }
-  insertValueToExpense(new_value);
 }
 
-function buttonMultiple(){
-  var expense = getExpenseValue();
-  var e = expense.toString();
-  // TO DO: walidacja na to, że jak występuje już mnożenie, to żeby nic nie robił
-  if ((e == '') || (e == '0')){
-    var new_value = "0"
-  }
-  else{
-    var new_value = e + " X ";
-  }
-  insertValueToExpense(new_value);
+function checkstring(str, searchingChar)
+{
+    if (-1 === str.indexOf(searchingChar))
+    {
+        return true
+    }
+    return false;
+}
+
+// funkcja do sprawdzania czy nie próbuje wpisać więcej niż 2 cyfr po przecinku
+function decimalValue(val) {
+    if (!val.includes("X"))
+    {
+        var str = val.substring(val.indexOf(",") + 1);
+        if (val.includes(","))
+        {
+            if (str.length >= 2)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    return true;
+}
+
+function cancelExpenses() {
+    if (listOfExpenses.length != 0) {
+        listOfExpenses = [];
+    }
+}
+
+//DB functions
+function insertExpensesToDatabase() {
+    sessionStorage.setItem('dbExpense', listOfExpenses);
+}
+
+function insertSettingsToDatabase() {
+    sessionStorage.setItem('dbSettings', listOfSettings);
 }
