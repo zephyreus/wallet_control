@@ -14,8 +14,8 @@
 	</author>
 	
 	<platform name="android">
-		<icon src="icon.png" />
-		<splash src="splash.png" />
+		<icon src="www/img/icon.png" gap:role="default"/>
+		<splash src="www/img/splash.png" />
 	</platform>
 
 	<plugin name="cordova-plugin-device" spec="~1.1.4" />
