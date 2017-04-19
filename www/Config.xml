@@ -14,7 +14,7 @@
 	</author>
 	
 	<platform name="android">
-		<icon src="icon.png" />
+		<icon src="icon.png" gap:role="default" />
 		<splash src="splash.png" />
 	</platform>
 
