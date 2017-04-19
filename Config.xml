@@ -12,6 +12,9 @@
 	<author href="" email="koprowski.przemyslaw@gmail.com">
 		Przemyslaw Koprowski
 	</author>
+	<author href="" email="test.test@gmail.com">
+		Test Testowe
+	</author>
 	
 	<platform name="android">
 		<icon src="www/img/icon.png" gap:role="default"/>
