@@ -9,13 +9,6 @@
     <author href="" email="wiktor.kozak@hotmail.com">
 		Wiktor Kozak
 	</author>
-	<author href="" email="koprowski.przemyslaw@gmail.com">
-		Przemyslaw Koprowski
-	</author>
-	<author href="" email="test.test@gmail.com">
-		Test Testowe
-	</author>
-	
 	<platform name="android">
 		<icon src="www/img/icon.png" gap:role="default"/>
 		<splash src="www/img/splash.png" />
