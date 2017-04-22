@@ -1,4 +1,4 @@
-var listOfExpenses = [];
+﻿var listOfExpenses = [];
 var date = new Date();
 var settings = {
     balance: "",
@@ -12,11 +12,9 @@ var objExpenses =
         value: "",
         date: ""
     };
-var curentMoney = {
-    val: "",
-    date: ""
-};
+var curentMoney;
 
+var currencyTable;
 var balanceVal;
 
 function removeSign() {
@@ -28,7 +26,7 @@ function removeSign() {
 
 function getExpenseValue(){
     var expense = document.getElementById('lastExpenses').value;
-  if ((expense == 0) || (expense == null) || (expense == "0")){
+    if (((expense == 0) && (expense != '0.')) || (expense == null) || (expense == "0")){
     return "";
   }
   else{
@@ -37,7 +35,7 @@ function getExpenseValue(){
 }
 
 function putInList(e) {
-    var newDiv = '<div class="newAddedExpenseList" ' + ">" + 'Value:' + e.value + "  Type:" + e.type +
+    var newDiv = '<div id=\"' + e.id + '\" class="newAddedExpenseList" ' + ">" + 'Value:' + parseFloat(e.value).toFixed(2) + "  Type:" + e.type +
         "<a class=\"ui-btn ui-icon - delete ui-btn-icon-right\" onclick=\"removeFromList(this);\"></a>"
         + "</div>";
     $('#listExpenses').append(newDiv); 
@@ -45,8 +43,22 @@ function putInList(e) {
 
 function removeFromList(ethis)
 {
-    var innerTxt = ethis.parentElement.innerHTML;
+    var parent = ethis.parentElement;
+    var innerTxt = parent.innerHTML;
     ethis.parentElement.outerHTML = "";
+    for (var x = 0; x < listOfExpenses.length; x++)
+    {
+        if (parent.id == listOfExpenses[x].id)
+        {
+            var varVal = listOfExpenses[x].value;
+            var valVar = parseFloat($('#moneysLeft').val());
+            var fVal = varVal + valVar;
+            fVal = parseFloat(fVal).toFixed(2);
+            $('#moneysLeft').val('');
+            $('#moneysLeft').val(fVal);
+            listOfExpenses.splice(x, 1);
+        }
+    }
 }
 
 function refreshExpenseValue() {
@@ -60,12 +72,13 @@ function getExchangeRate() {
         xhr.send();
         if (xhr.status == 200) {
             localStorage.setItem('dbExchangeRate', xhr.responseText);
-        }
+            currencyTable = $.parseJSON(localStorage.getItem('dbExchangeRate'));
+        }      
     }
     catch (err)
     {
         navigator.notification.alert(
-            'An unknown error occurred while retrieving the data. Please check your network connection or enter expense in EUR and try again.',  
+            'An unknown error occurred while retrieving the data. Please check your network connection or enter expense in PLN and try again.',  
             null,         
             'Error',          
             'OK'               
@@ -77,10 +90,13 @@ function setMoney(valu)
 {
     var date = new Date();
     if (valu != true) {        
-        curentMoney = JSON.parse(localStorage.getItem('dbMoney'));
-        if (curentMoney != null && curentMoney.date == (date.getDate() + '-' + date.getMonth() + 1) + '-' + date.getFullYear())
+        var sett = localStorage.getItem('dbSettings', settings);
+        if (sett != "undefined") {
+            var setobj = $.parseJSON(sett);
+        }
+        if (setobj != null && setobj.expense != null && setobj.expense != '')
         {            
-            $('#moneysLeft').val(parseFloat(curentMoney.val).toFixed(2));
+            $('#moneysLeft').val(parseFloat(setobj.expense).toFixed(2));
         }
         else
         {
@@ -90,20 +106,19 @@ function setMoney(valu)
     }
     else {
         var moneyVal = $('#moneysLeft').val();
-        curentMoney.val = moneyVal - objExpenses.value;
-        $('#moneysLeft').val(parseFloat(curentMoney.val).toFixed(2));
+        curentMoney = moneyVal - objExpenses.value;
+        $('#moneysLeft').val(parseFloat(curentMoney).toFixed(2));
         if (moneyVal - objExpenses.value < 0)
         {
             navigator.vibrate(1000);
         }
     }
-    curentMoney = {
-        val: curentMoney.val,
-        date: (date.getDate() + '-' + date.getMonth() + 1) + '-' + date.getFullYear()
-    };
 }
 function converterToDefaultCurrency(valmoney) {
-    var currencyTable = $.parseJSON(localStorage.getItem('dbExchangeRate'));
+    var dbEx = localStorage.getItem('dbExchangeRate');
+    if(dbEx){
+    currencyTable = $.parseJSON(dbEx);
+    }
     if (currencyTable == null)
     {
         getExchangeRate();
@@ -129,46 +144,69 @@ function getCurrency()
 
 function addToArray()
 {
+
     var val = getExpenseValue();  
-    var valmoney = val.split("X")[0];
-    var nb = val.split("X")[1];
-    if (getCurrency() != "PLN") {
-        valmoney = converterToDefaultCurrency(valmoney);
-    }
-    if (nb != undefined && nb != 0) {
-        val = valmoney * nb;
-    }
-    else {
-        val = valmoney;
-    }
-    var id = localStorage.getItem('DbID');
-    var type = getType();    
-    var date = new Date();
-    var strDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
-    if (id == null)
-    {
-        id = 1;
-        localStorage.setItem('DbID', id);
-    }
-    if (val != "" && type !== 'Othere') {
-        objExpenses = { id: id, type: type, value: val, date: strDate };
-        listOfExpenses.push(objExpenses);    
-        localStorage.setItem('DbID', ++id); 
+    if (val != '' || val != null) {
+        var valmoney = val.split("X")[0];
+        var nb = val.split("X")[1];
+        if (getCurrency() != "PLN") {
+            valmoney = converterToDefaultCurrency(valmoney);
+        }
+        if (nb != undefined && nb != 0) {
+            val = valmoney * nb;
+        }
+        else {
+            val = valmoney;
+        }
+        var id = localStorage.getItem('DbID');
+        var type = getType();
+        var date = new Date();
+        var strDate = date.getDate() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+        if (id == null) {
+            id = 1;
+            localStorage.setItem('DbID', id);
+        }
+        if (val != "" && type !== 'Othere') {
+            objExpenses = { id: id, type: type, value: parseFloat(val), date: strDate };
+            listOfExpenses.push(objExpenses);
+            localStorage.setItem('DbID', ++id);
+            setMoney(true);
+            putInList(objExpenses);
+        }
+        else {
+            objExpenses = { id: id, type: 'Othere', value: parseFloat(val), date: strDate };
+            listOfExpenses.push(objExpenses);
+            localStorage.setItem('DbID', ++id);
+            setMoney(true);
+            putInList(objExpenses);
+        }
         refreshExpenseValue();
-        setMoney(true);
-        putInList(objExpenses);
     }
     else
     {
-        objExpenses = { id: id, type: 'Othere', value: val, date: strDate };
-        listOfExpenses.push(objExpenses);
-        localStorage.setItem('DbID', ++id);
-        refreshExpenseValue();
-        setMoney(true);
-        putInList(objExpenses);
+        navigator.notification.alert(
+            'Please enter value in expense field',
+            null,
+            'Error',
+            'Ok'
+        );
     }
 }
 
+function checkSettings()
+{
+    settings.balance = $("#balance").val();
+    settings.expense = $("#expense").val();
+    if (settings.balance == null || settings.expense == null || settings.balance == '' || settings.expense == '') {
+        navigator.notification.alert(
+            'Please enter values in settings',
+            null,
+            'Error',
+            'Ok'
+        );
+        $('#hdShopping').click();
+    }
+}
 
 
 function getType() {
@@ -195,7 +233,18 @@ function setNumber(e){
 function setFromAmount()
 {
     var expMon = $("#setExpense").val();
-    $('#moneysLeft').val(expMon);
+    if (expMon == '') {
+        navigator.notification.alert(
+            'Please enter value',
+            null,
+            'Error',
+            'Ok'
+        );
+        $('#hdmaxAmount').click();
+    }
+    else {
+        $('#moneysLeft').val(expMon);
+    }
 }
 
 function buttonSpecialSign(et){
@@ -269,13 +318,16 @@ function saveSetting()
     settings.balance = $("#balance").val();
     settings.expense = $("#expense").val();
     localStorage.setItem('dbSettings', JSON.stringify(settings));
+    curentMoney = settings.balance;
     if (curentMoney != null) {
         localStorage.setItem('dbMoney', JSON.stringify(curentMoney));
     }
     else {
-        localStorage.setItem('dbMoney', JSON.stringify(settings.balance));
+        localStorage.setItem('dbMoney', JSON.stringify(settings.expense));
     }
-    $('#lastExpenses').val(settings.expense);
+}
+function setMoneyLeft() {
+
 }
 
 function setBalance(monLimit)
@@ -283,9 +335,11 @@ function setBalance(monLimit)
     var spentVal = 0;
     for (var x = 0; x < listOfExpenses.length; x++)
     {
-        spentVal +=  listOfExpenses[x].value;
+        spentVal += listOfExpenses[x].value;
     }    
-   /* if (monLimit > 0) {
+    monLimit -= spentVal;
+    localStorage.setItem('dbMoney', JSON.stringify(monLimit));
+    if (monLimit > 0) {
         navigator.notification.alert(
             'You spent ' + parseFloat(spentVal).toFixed(2) + '\n' + 'Monthly limit ' + parseFloat(monLimit).toFixed(2),
             null,
@@ -300,14 +354,15 @@ function setBalance(monLimit)
             '',
             'Ok'
         );
-    }*/
+    }
     balanceVal = spentVal;
 }
 //DB functions
 function insertExpensesToDatabase() {
     localStorage.setItem('dbExpense', JSON.stringify(listOfExpenses));
     var bal = $.parseJSON(localStorage.getItem('dbMoney'));
-    setBalance(bal.val - balanceVal);
-    localStorage.setItem('dbBalance', JSON.stringify(bal.val - balanceVal));    
-    localStorage.setItem('dbMoney', JSON.stringify(curentMoney));
+    setBalance(bal);   
+    localStorage.setItem('dbMoney', JSON.stringify(balanceVal));
+    listOfExpenses = [];
+    $('#hdShopping').click();
 } 
